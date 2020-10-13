@@ -92,6 +92,25 @@ int findDistance(string word1,string word2){
 	return word1.length()+ word2.length() - 2*i +distance; 
 }
 
+void recommend(string word){
+	if(searchWord(word)){
+		cout<<word<<" is the correct spelling!"<<endl;
+		return;
+	}
+	trieNode* temp = root;
+	printAll(temp,"",0,word);
+	sort(ln.begin(), ln.end());
+	int i = 1;
+	for(vector< pair<int, string> > :: iterator itr = ln.begin(); itr!= ln.end(); itr++){
+		cout<<itr->second<<endl;
+		if(i%10==0){
+			cout<<"View more? [1/0]: ";
+			cin>>i;
+			if(!i){return;}
+		}
+		else{i++;}
+	}
+}
 
 
 int main(){
@@ -116,9 +135,6 @@ int main(){
 			cout<<"The word is spelled wrong."<<endl;
 		}
 	}
-
-	// trieNode* temp = obj1.root_getter();
-	// obj1.all(temp, "",0);
 
 	cout<<findDistance("stack","stck");
 }
