@@ -180,13 +180,6 @@ int main()
             int comp = printAutoSuggestions(root, line); 
 		}
 	}
-	int comp = printAutoSuggestions(root, "hel"); 
-
-	if (comp == -1) 
-		cout << "No other strings found with this prefix\n"; 
-
-	else if (comp == 0) 
-		cout << "No string found with this prefix\n"; 
 
 	return 0; 
 } 
