@@ -2,14 +2,14 @@
 #include <fstream>
 #include <vector>
 #include <string>
-#include <chrono>
 #include <algorithm>
 #include <vector>
+#include <time.h>
+#include "BKTree.h"
 
 #define CHAR_TO_INDEX(c) ((int)c - (int)'a')
 
 using namespace std;
-using namespace std::chrono;
 
 vector< pair<int, string> > ln;
 
@@ -144,6 +144,7 @@ public:
 			return;
 		}
 		trieNode* temp = root;
+		cout<<"TRIE Tree predictions:";
 		printAll(temp,"",0,word);
 		sort(ln.begin(), ln.end());
 		int i = 1;
@@ -157,57 +158,247 @@ public:
 			else{i++;}
 		}
 	}
-
-	// void suggestionsRec(struct trieNode* root, string currPrefix){
-	// 	if(root->isEnd){
-	// 		cout<< currPrefix<<endl;
-	// 	}
-
-	// 	if(isLastNode(root))
-	// 		return;
-		
-	// 	for(int i = 0; i < 26; i++){
-	// 		if(root->children[i]){
-	// 			currPrefix.push_back(97 + i);
-	// 			suggestionsRec(root->children[i], currPrefix);
-	// 			currPrefix.pop_back();
-	// 		}
-	// 	}
-	// }
-
-	// int printAutoSuggestions(trieNode* root, const string query){
-	// 	struct trieNode* temp = root;
-
-	// 	int level, n = query.length();
-
-	// 	for(level = 0; level < n; level++){
-	// 		int index = CHAR_TO_INDEX(query[level]);
-
-	// 		if(!temp->children[index])
-	// 			return 0;
-			
-	// 		temp = temp->children[index];
-	// 	}
-
-	// 	bool isWord = (temp->isEnd == true);
-
-	// 	bool isLast = isLastNode(temp);
-
-	// 	if(isWord && isLast){
-	// 		cout<<query<<endl;
-	// 		return -1;
-	// 	}
-
-	// 	if(!isLast){
-	// 		string prefix = query;
-	// 		suggestionsRec(temp, prefix);
-	// 		return 1;
-	// 	}
-	// }
 };
 
 //BK tree implementation
+struct Node{
+     string word;
+     size_t distance;
+     Node* leftChild;
+     Node* rightSibling;
+ };
 
+ class BKTree{
+     private:
+        Node* root;
+        Node* createNode(string w, size_t d);
+        int min(int a, int b, int c);
+        size_t levenshteinDistance(string w1, string w2);
+        void recursiveSearch(Node* node, vector<string>& suggestions, string w, size_t t, bool& wordFound);
+        bool inRange(size_t curDist, size_t minDist, size_t maxDist);
+        void printSuggestions(vector<string>& suggestions, bool wordFound);
+    public:
+        BKTree();
+        ~BKTree();
+        void add(string w);
+        void cleanString(basic_string<char>& s);
+        void search(string w, int t);
+ };
+
+BKTree::BKTree() { root = NULL; }
+BKTree::~BKTree() { delete root; }
+
+Node* BKTree::createNode(string w, size_t d)
+{
+    Node* node = new Node();
+    
+    node->word = w;
+    node->distance = d;
+    node->leftChild = NULL;
+    node->rightSibling = NULL;
+    
+    return node;
+}
+
+void BKTree::add(string w)
+{
+    if (root == NULL)
+    {
+        root = createNode(w, -1);
+        return;
+    }
+    
+    Node* curNode = root;
+    Node* child;
+    Node* newChild;
+    size_t dist;
+    
+    while (1) {
+        dist = levenshteinDistance(curNode->word, w);
+        if (!dist)
+            return;
+        child = curNode->leftChild;
+        while (child)
+        {
+            if (child->distance == dist)
+            {
+                curNode = child;
+                break;
+            }
+            child = child->rightSibling;
+        }
+        if (!child)
+        {
+            newChild = createNode(w, dist);
+            newChild->rightSibling = curNode->leftChild;
+            curNode->leftChild = newChild;
+            break;
+        }
+    }
+}
+
+void BKTree::search(string w, int t)
+{
+    vector<string> suggestions;
+    bool wordFound = false;
+    
+    recursiveSearch(root, suggestions, w, t, wordFound);
+    
+    printSuggestions(suggestions, wordFound);
+}
+
+void BKTree::recursiveSearch(Node* curNode, vector<string>& suggestions, string w,
+                             size_t t, bool& wordFound)
+{
+    size_t curDist = levenshteinDistance(curNode->word, w);
+    size_t minDist = curDist - t;
+    size_t maxDist = curDist + t;
+    
+    if (!curDist) {
+        wordFound = true;
+        return;
+    }
+    if (curDist <= t)
+        suggestions.push_back(curNode->word);
+    
+    Node* child = curNode->leftChild;
+    if (!child) return;
+    
+    while (child)
+    {
+        if (inRange(child->distance, minDist, maxDist))
+            recursiveSearch(child, suggestions, w, t, wordFound);
+        
+        child = child->rightSibling;
+    }
+    
+}
+
+bool BKTree::inRange(size_t curDist, size_t minDist, size_t maxDist)
+{
+    return (minDist <= curDist && curDist <= maxDist);
+}
+
+void BKTree::printSuggestions(vector<string>& suggestions, bool wordFound)
+{
+    if (wordFound)
+    {
+        cout << "Word is spelled correctly." << endl;
+    }
+    else if (suggestions.empty())
+    {
+        cout << "No suggestions found." << endl;
+    }
+    else
+    {
+        cout << "BK Tree Predictions: ";
+        for (int i = 0; i < suggestions.size() - 1; i++)
+        {
+            cout << suggestions[i] << ", ";
+        }
+        cout << suggestions[suggestions.size() - 1] << "?" << endl;
+    }
+}
+
+//https://en.wikipedia.org/wiki/Levenshtein_distance
+size_t BKTree::levenshteinDistance(string w1, string w2)
+{
+    if (w1.length() == 0)
+        return w2.length();
+    if (w2.length() == 0)
+        return w1.length();
+    
+    size_t n_w1 = w1.length();
+    size_t n_w2 = w2.length();
+    int cost;
+    
+    int d[n_w1 + 1][n_w2 + 1];
+    
+    for (int i = 0; i <= n_w1; i++)
+        d[i][0] = i;
+    for (int i = 0; i <= n_w2; i++)
+        d[0][i] = i;
+    
+    for (int i = 1; i <= n_w1; i++)
+    {
+        for (int j = 1; j <= n_w2; j++)
+        {
+            
+            cost = (w1[i - 1] == w2[j - 1]) ? 0 : 1;
+            
+            d[i][j] = min(d[i - 1][j] + 1,
+                          d[i][j - 1] + 1,
+                          d[i - 1][j - 1] + cost);
+        }
+    }
+    
+    return d[n_w1][n_w2];
+}
+
+int BKTree::min(int a, int b, int c)
+{
+    int min = a;
+    if (b < min)
+        min = b;
+    if (c < min)
+        min = c;
+    
+    return min;
+}
+
+void BKTree::cleanString(basic_string<char>& s)
+{
+    for (basic_string<char>::iterator p = s.begin();
+         p != s.end(); ++p)
+    {
+        *p = tolower(*p);
+    }
+}
+BKTree* tree = new BKTree();
+
+BKTree* BKTreeInit(){
+	// BKTree* tree = new BKTree();
+
+	string line;
+	ifstream file("words.txt");
+	clock_t start;
+	clock_t end;
+
+	double elapsedTime;
+
+	if(file.is_open()){
+		cout<<"Building BKTree..."<<endl;\
+
+		while(getline(file, line))
+			tree->add(line);
+		
+		file.close();
+	}
+	cout<<"Done building BKTree."<<endl<<endl;
+
+	// string word = l;
+
+	// tree->cleanString(word);
+
+	// // start = clock();
+	// tree->search(word, 1);
+	
+	return tree;
+}
+
+void BKTreeSearch(string line){
+	string word = line;
+
+	tree->cleanString(word);
+
+	// // start = clock();
+	// cout<<"Searching";
+	tree->search(word, 1);
+	// end = clock();
+
+	// elapsedTime = double(end - start) /CLOCKS_PER_SEC;
+	// cout<<"Results found by implementing BKTree in "<<elapsedTime<<"s."<<endl<<endl;
+}
 
 
 int main(){
@@ -223,17 +414,22 @@ int main(){
 		words.close();
 	}
 
+	BKTreeInit();
+
 	while(1){
 		cout<<"Enter word: ";
 		cin>>line;
 		if((int)obj1.searchWord(line)){
 			cout<<"The spelling of this word is correct."<<endl;
+			BKTreeSearch(line);
 		}else{
 			cout<<"The word is spelled wrong."<<endl;
 			obj1.recommend(line);
+			BKTreeSearch(line);
 		}
 	}
 
-	cout<<findDistance("stack","stck");
+	// BKTreeSearch(line);
 }
+
 
