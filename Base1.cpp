@@ -161,6 +161,7 @@ int main(){
 	}
 
 	while(1){
+		ln.clear();
 		int choice;
 		cout<<"1-Check\n2-Recommendation\nAnything else-Exit\n";
 		cin>>choice;
