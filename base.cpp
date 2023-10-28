@@ -348,8 +348,7 @@ int BKTree::min(int a, int b, int c)
 
 void BKTree::cleanString(basic_string<char>& s)
 {
-    for (basic_string<char>::iterator p = s.begin();
-         p != s.end(); ++p)
+    for (basic_string<char>::iterator p = s.begin();p != s.end(); ++p)
     {
         *p = tolower(*p);
     }
