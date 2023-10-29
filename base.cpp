@@ -137,25 +137,39 @@ public:
 			}
 		}
 	}
+	void recommend(string word)
+	{
+		ln.clear(); // Clear the vector before adding new recommendations
 
-	void recommend(string word){
-		if(searchWord(word)){
-			cout<<word<<" is the correct spelling!"<<endl;
+		if (searchWord(word))
+		{
+			cout << word << " is the correct spelling!" << endl;
 			return;
 		}
-		trieNode* temp = root;
-		cout<<"TRIE Tree predictions:";
-		printAll(temp,"",0,word);
+
+		trieNode *temp = root;
+		cout << "TRIE Tree predictions:";
+		printAll(temp, "", 0, word);
+
 		sort(ln.begin(), ln.end());
 		int i = 1;
-		for(vector< pair<int, string> > :: iterator itr = ln.begin(); itr!= ln.end(); itr++){
-			cout<<itr->second<<endl;
-			if(i%10==0){
-				cout<<"View more? [1/0]: ";
-				cin>>i;
-				if(!i){return;}
+
+		for (vector<pair<int, string>>::iterator itr = ln.begin(); itr != ln.end(); itr++)
+		{
+			cout << itr->second << endl;
+			if (i % 10 == 0)
+			{
+				cout << "View more? [1/0]: ";
+				cin >> i;
+				if (!i)
+				{
+					return;
+				}
 			}
-			else{i++;}
+			else
+			{
+				i++;
+			}
 		}
 	}
 };
@@ -300,7 +314,6 @@ void BKTree::printSuggestions(vector<string>& suggestions, bool wordFound)
     }
 }
 
-//https://en.wikipedia.org/wiki/Levenshtein_distance
 size_t BKTree::levenshteinDistance(string w1, string w2)
 {
     if (w1.length() == 0)
@@ -348,7 +361,8 @@ int BKTree::min(int a, int b, int c)
 
 void BKTree::cleanString(basic_string<char>& s)
 {
-    for (basic_string<char>::iterator p = s.begin();p != s.end(); ++p)
+    for (basic_string<char>::iterator p = s.begin();
+         p != s.end(); ++p)
     {
         *p = tolower(*p);
     }
